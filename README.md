@@ -73,14 +73,26 @@ python fast_augment_save.py
 If the baseline nuclei segmentation doesn't have much splits/merges. 
 This code create a augmented segmentation by adding split and merges errors on random nucleis in each images and save the new annotations, contours and insides in a new folder.
 
+It also create a clickmap for each image by comparing the ground truth to the baseline segmentation.
+
+The click map has 4 channels:
+
+- 1st channel is for False Positive nuclei (FP)
+- 2nd channel is for merged nucleis
+- 3rd channel is for splitted nucleis
+- 4th channel is for FN nuclei (FN)
+
+
 ### 7. Train Click_ref
 
 ```
 cd Click_ref
 python train.py
 ```
+This code uses the baseline segmentation and the click maps generated to train the click_ref module to reconstruct the ground truth.
 
-### 8
+
+### 8.
 
 
 
