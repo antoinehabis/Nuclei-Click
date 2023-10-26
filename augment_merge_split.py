@@ -6,7 +6,6 @@ from skimage.measure import label
 import numpy as np
 import cv2
 
-
 class ModifyImg:        
 
     def merge(self, input_):
@@ -63,6 +62,8 @@ class ModifyImg:
 
         return new
 
+
+
     def draw_new_contours(self, input_):
         black = np.zeros(input_.shape)
         for u in np.unique(input_)[1:]:
@@ -71,6 +72,8 @@ class ModifyImg:
             black = cv2.drawContours(black,contours, -1, 3,2)
         black = black >0
         return black
+
+
     
     def modify(self, input_):
 

@@ -1,11 +1,5 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[1]:
-
 
 import numpy as np
-
 from numba import jit
 from tqdm import tqdm
 from scipy.optimize import linear_sum_assignment

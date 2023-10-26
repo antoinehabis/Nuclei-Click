@@ -1,10 +1,7 @@
 ## This repository offers an enhancement to the article:
 ### *Smart Learning of Click and Refine for Nuclei Segmentation on Histology Images*
 
-
-### To reproduce the results:
-
-#### 1. Download PanNuke Dataset: 
+### 1. Download PanNuke Dataset: 
 
 You can Download the dataset here:[PanNuke](https://warwick.ac.uk/fac/cross_fac/tia/data/pannukeg).
 
@@ -15,7 +12,7 @@ In the config file  [config](config.py), precise the folder location:
 path_panuke = FOLDER_LOCATION
 ```
 
-#### 2. Process data:
+### 2. Process data:
 
 run 
 ```
@@ -23,19 +20,19 @@ python np_to_images_folder.py
 ```
 this code:
 
-- 1. Opens the images.npy and mask.npy for each folder
-- 2. Corrects wrong annotations
-- 3. Saves each patch and each ground truth annotations as .tif files
+* **1.** $~~~~~$ Opens the images.npy and mask.npy for each folder
+* **2.** $~~~~~$ Corrects wrong annotations
+* **3.** $~~~~~$ Saves each patch and each ground truth annotations as .tif files
 
-#### 3. Run train/test/val split:
+### 3. Run train/test/val split:
 run
 ```
 python train_test_val.py --ptrain 0.75  --pval 0.125
 ```
 
-This code generates 3 random dataframes. Each dataframe contains filenames of the images belonging to the correponding split. You can choose ```p_train```, ```p_val``` for the proportion of each split. ```p_test = 1 - p_train-p_val```.
+This code generates 3 random dataframes. Each dataframe contains filenames of the images belonging to the correponding split. You can choose ```p_train```, ```p_val``` for the proportion of each split.(```p_test = 1 - p_train-p_val```).
 
-#### 4. Train Autoencoder:
+### 4. Train Autoencoder:
 
 run 
 ```
@@ -49,7 +46,7 @@ run
 run 
 
 ```
-python generate_contour_binary.py --path_annotations
+python generate_contour_inside.py --path_annotations
 
 ```
 
@@ -71,16 +68,17 @@ python fast_augment_save.py
 ```
 
 If the baseline nuclei segmentation doesn't have much splits/merges. 
-This code create a augmented segmentation by adding split and merges errors on random nucleis in each images and save the new annotations, contours and insides in a new folder.
 
-It also create a clickmap for each image by comparing the ground truth to the baseline segmentation.
+This code **create an augmented segmentation by adding split and merges errors on random nucleis in each images and save the new annotations, contours and insides in a new folder**.
+
+It also creates a clickmap for each image by comparing the ground truth to the baseline segmentation.
 
 The click map has 4 channels:
 
-- 1st channel is for False Positive nuclei (FP)
-- 2nd channel is for merged nucleis
-- 3rd channel is for splitted nucleis
-- 4th channel is for FN nuclei (FN)
+* 1<sup>st</sup> channel is for False Positive nuclei (FP)
+* 2<sup>nd</sup> channel is for merged nucleis
+* 3<sup>rd</sup> channel is for splitted nucleis
+* 4<sup>th</sup> channel is for FN nuclei (FN)
 
 
 ### 7. Train Click_ref
@@ -96,16 +94,7 @@ This code uses the baseline segmentation and the click maps generated to train t
 
 
 
-
-
-
-
-
-
-
-
-
-@INPROCEEDINGS{9897496,
+<!-- @INPROCEEDINGS{9897496,
   author={Habis, Antoine and Meas-Yedid, Vannary and González Obando, Daniel Felipe and Olivo-Marin, Jean-Christophe and Angelini, Elsa D.},
   booktitle={2022 IEEE International Conference on Image Processing (ICIP)}, 
   title={Smart Learning of Click and Refine for Nuclei Segmentation on Histology Images}, 
@@ -113,4 +102,4 @@ This code uses the baseline segmentation and the click maps generated to train t
   volume={},
   number={},
   pages={2281-2285},
-  doi={10.1109/ICIP46576.2022.9897496}}
+  doi={10.1109/ICIP46576.2022.9897496}} -->

@@ -7,7 +7,6 @@ import cv2
 
 path_baseline = path_stardist_modified
 
-
 for path in tqdm(glob.glob(os.path.join(path_baseline,'baseline','/*'))):
     img = tifffile.imread(path)
     binary = (img > 0).astype(float)

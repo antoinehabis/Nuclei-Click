@@ -1,6 +1,5 @@
 import sys
 from pathlib import Path
-
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 import numpy as np
 from config import *
@@ -12,8 +11,8 @@ import torch
 
 final_loss = Finalloss()
 click_ref = Click_ref(7, 3)
-# click_ref.load_state_dict(torch.load(path_weights_click_ref))
-optimizer = torch.optim.Adam(click_ref.parameters(), lr=1e-4)
+click_ref.load_state_dict(torch.load(path_weights_click_ref))
+optimizer = torch.optim.Adam(click_ref.parameters(), lr=1e-5)
 scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.98)
 
 
