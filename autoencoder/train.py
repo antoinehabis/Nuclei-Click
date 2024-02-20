@@ -1,6 +1,10 @@
-from unet import UNet
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).resolve().parent.parent))
+
+from .unet import UNet
 import torch
-from .dataloader import *
+from dataloader import *
 from .augmentation import augmentation
 import neptune
 from .loss_contractive import loss_function
@@ -22,7 +26,6 @@ model = UNet(3, 3).cuda()
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-5)
 scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.98)
 loss = torch.nn.MSELoss(size_average=None, reduce=None, reduction="mean")
-model.load_state_dict(torch.load("weights_autoencoder_CAE"))
 loss_contractive = loss_function
 
 
@@ -52,11 +55,9 @@ def train(model, optimizer, train_dl, val_dl, loss_contractive, loss_mse, epochs
             run["train/epoch/loss"].log(loss_tot)  # backward
 
         # --- EVALUATE ON VALIDATION SET -------------------------------------
+
         model.eval()
         val_loss_tot = 0.0
-        num_val_correct = 0
-        num_val_examples = 0
-
         mean = torch.zeros(1).cuda()
         with torch.no_grad():
             for batch in val_dl:
@@ -74,7 +75,7 @@ def train(model, optimizer, train_dl, val_dl, loss_contractive, loss_mse, epochs
             if torch.gt(tmp, mean):
                 print("the val loss decreased: saving the model...")
                 tmp = mean
-                torch.save(model.state_dict(), "weights_autoencoder_CAE")
+                torch.save(model.state_dict(), os.path.join(path_pannuke,"weights_autoencoder_CAE_"+str(parameters['n_embedding'])))
     return 0
 
 
@@ -85,5 +86,5 @@ train(
     loader_val,
     loss_contractive=loss_function,
     loss_mse=loss,
-    epochs=300,
+    epochs=1000,
 )

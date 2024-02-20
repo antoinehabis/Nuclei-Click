@@ -5,49 +5,61 @@ import numpy as np
 from config import *
 from model import Click_ref
 import neptune
-from tiloss import Finalloss
-from dataloader import *
+from dataloader import dataloaders
 import torch
+from TopoInteraction.TI_Loss import final_loss
 
-final_loss = Finalloss()
-click_ref = Click_ref(7, 3)
-click_ref.load_state_dict(torch.load(path_weights_click_ref))
-optimizer = torch.optim.Adam(click_ref.parameters(), lr=1e-5)
+token = os.getenv('NEPTUNE_API_TOKEN')
+project = os.getenv('NEPTUNE_WORKSPACE')
+
+click_ref = Click_ref(3, 3)
+optimizer = torch.optim.Adam(click_ref.parameters(), lr=1e-4)
 scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.98)
-
-
 run = neptune.init_run(
-    project="aureliensihab/deep-icy",
-    api_token="eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vYXBwLm5lcHR1bmUuYWkiLCJhcGlfdXJsIjoiaHR0cHM6Ly9hcHAubmVwdHVuZS5haSIsImFwaV9rZXkiOiIwZjdkOTI0Yy1iOGJkLTQyMzEtYmEyOC05MmFmYmFhMWExNTMifQ==",
+    name='deep-icy',
+    mode='offline',
+    project=project,
+    api_token=token,
 )
 run["config/Hyperparameters"] = parameters
 run["config/optimizer"] = "Adam"
 
 
-def train(model, optimizer, train_dl, val_dl, epochs=300):
-    tmp = (torch.ones(1) * 1e15).cuda()
+def train_cuda(model, optimizer, train_dl, val_dl, epochs=500):
+    tmp = (torch.ones(1) * 1e10).cuda()
     for epoch in range(1, epochs + 1):
+
+        if epoch < 500:
+            ti_weights = 0.0
+        else:
+            ti_weights = 1e-4
+        #     final_loss = Finalloss(dice_weight=1.0, ti_weight=1e-4)
         # --- TRAIN AND EVALUATE ON TRAINING SET -----------------------------
         model.train()
         model.cuda()
-        loss_tot = 0.0
-        num_train_correct = 0
-        num_train_examples = 0
+        loss = 0.0
 
         for batch in train_dl:
             optimizer.zero_grad()
-
             images = batch[0].cuda()
             stardists = batch[1].cuda()
             outputs = batch[2].cuda()
-
-            pred_outputs = model(images, stardists)
-            loss = final_loss(pred_outputs, outputs)
-            loss_tot = loss
+            clicks = batch[3].cuda()
+            clicks_max, _ = torch.max(clicks, dim=1)
+            pred_outputs = model(images, clicks, stardists)
+            loss_click, loss_not_click, ti_loss = final_loss(
+                outputs, pred_outputs, stardists, clicks_max
+            )
             # backward
-            loss_tot.backward()
+            # writer.add_scalar("Loss/train_click", loss_click, i)
+            # writer.add_scalar("Loss/train_not_click", 1e-2 *loss_not_click, i)
+            run["train/epoch/loss_click"].log(loss_click)
+            run["train/epoch/loss_not_click"].log(1e-2 *loss_not_click)
+            # run["train/epoch/loss_ti"].log(ti_weights * ti_loss)
+            loss = loss_click + 1e-2 *loss_not_click + ti_weights * ti_loss
+            loss.backward()
             optimizer.step()
-            run["train/epoch/loss_tot"].log(loss_tot)
+            run["train/epoch/loss"].log(loss)
 
         # --- EVALUATE ON VALIDATION SET -------------------------------------
         model.eval()
@@ -62,19 +74,31 @@ def train(model, optimizer, train_dl, val_dl, epochs=300):
                 images = batch[0].cuda()
                 stardists = batch[1].cuda()
                 outputs = batch[2].cuda()
+                clicks = batch[3].cuda()
+                clicks_max, _ = torch.max(clicks, dim=1)
+                pred_outputs = model(images, clicks, stardists)
+                loss_click, loss_not_click, ti_loss = final_loss(
+                    outputs, pred_outputs, stardists, clicks_max
+                )
+                run["validation/epoch/loss_click"].log(loss_click)
+                run["validation/epoch/loss_not_click"].log(1e-2 *loss_not_click)
+                run["validation/epoch/loss_not_click"].log(1e-2 *loss_not_click)
+                # run["validation/epoch/loss_ti"].log(ti_weights * ti_loss)
+                # writer.add_scalar("Loss/validation_click", loss_click, i)
+                # writer.add_scalar("Loss/validation_not_click", 1e-2 *loss_not_click, i)
+                loss = loss_click + 1e-2 * loss_not_click + ti_weights * ti_loss
+                run["validation/epoch/loss"].log(loss)
 
-                pred_outputs = model(images, stardists)
-                loss = final_loss(pred_outputs, outputs)
-                val_loss_tot = loss
-                mean += val_loss_tot
+                mean += loss
 
-                run["test/epoch/loss_tot"].log(val_loss_tot)
+
             mean = torch.mean(mean)
             if torch.gt(tmp, mean):
                 print("the val loss decreased: saving the model...")
                 tmp = mean
                 torch.save(model.state_dict(), path_weights_click_ref)
+
     return "Training done: the model was trained for " + str(epochs) + " epochs"
 
 
-train(click_ref, optimizer, dataloaders["train"], dataloaders["val"], epochs=500)
+train_cuda(click_ref, optimizer, dataloaders["train"], dataloaders["val"], epochs=100)

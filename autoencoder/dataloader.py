@@ -24,8 +24,10 @@ class CustomImageDataset(Dataset):
     def __getitem__(self, idx):
 
         filename = self.dataframe.iloc[idx]['filename']
+        
         """read image"""
         image = tifffile.imread(os.path.join(self.path_images, filename))/255
+
         if self.augmentation:
             image = augmentation(image)
         """ Generate output grids by comparing modified baseline seg with ground truth"""
@@ -56,17 +58,17 @@ dataset_val = CustomImageDataset(path_images = path_images,
 loader_train = DataLoader(
     batch_size = 32,
     dataset = dataset_train,
-    num_workers = 16,
+    num_workers = 8,
     shuffle = True)
 
 loader_val = DataLoader(
     batch_size = 32,
     dataset = dataset_val,
-    num_workers = 16,
+    num_workers = 8,
     shuffle = False)
 
 loader_test = DataLoader(
     batch_size = 32,
     dataset = dataset_test,
-    num_workers = 16,
+    num_workers = 8,
     shuffle = False)

@@ -4,10 +4,9 @@ import tifffile
 import numpy as np
 from glob import glob
 import cv2
+path_baseline = path_stardist
 
-path_baseline = path_stardist_modified
-
-for path in tqdm(glob.glob(os.path.join(path_baseline,'baseline','/*'))):
+for path in tqdm(glob(os.path.join(path_baseline,'baseline/*'))):
     img = tifffile.imread(path)
     binary = (img > 0).astype(float)
     cts = np.zeros(binary.shape)
@@ -17,6 +16,5 @@ for path in tqdm(glob.glob(os.path.join(path_baseline,'baseline','/*'))):
         contours, _ = cv2.findContours(nuclei, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         cts = cv2.drawContours(cts, contours, -1, 1, 2)
     cts = (cts > 0).astype(float)
-
     tifffile.imsave(os.path.join(path_baseline, 'contour', filename), cts)
     tifffile.imsave(os.path.join(path_baseline, 'binary', filename), binary)

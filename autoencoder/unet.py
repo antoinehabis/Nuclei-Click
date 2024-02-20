@@ -1,5 +1,10 @@
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).resolve().parent.parent))
+
 from .unet_parts import *
 import torch
+from torch.nn import Linear, Flatten
 class UNet(nn.Module):
     def __init__(self, n_channels, n_classes, bilinear=False):
         super(UNet, self).__init__()
@@ -18,19 +23,25 @@ class UNet(nn.Module):
         self.up3 = (Up(self.filters*4, self.filters*2 // factor, bilinear))
         self.up4 = (Up(self.filters*2,self.filters, bilinear))
         self.outc = (OutConv(self.filters, n_classes))
-
+        self.dense1 = Linear(self.filters**(2)*16*16 , self.filters**2, bias=True)
+        self.dense2 = Linear(self.filters**2, self.filters**(2)*16*16, bias=True)
+        self.flatten = Flatten(start_dim=1, end_dim=-1)
     def forward(self, x):
         x1 = self.inc(x)
         x2 = self.down1(x1)
         x3 = self.down2(x2)
         x4 = self.down3(x3)
         x5 = self.down4(x4)
-        x = self.up1(x5)
+        shape = x5.shape
+        x6 = self.dense1(self.flatten(x5))
+        x7 = self.dense2(x6)
+        x8 = torch.reshape(x7, shape)
+        x = self.up1(x8)
         x = self.up2(x)
         x = self.up3(x)
         x = self.up4(x)
         logits = self.outc(x)
-        return logits, x1, x2, x3, x4, x5
+        return logits, x1, x2, x3, x4, x6
 
     def use_checkpointing(self):
         self.inc = torch.utils.checkpoint(self.inc)

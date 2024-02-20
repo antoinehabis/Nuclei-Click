@@ -1,10 +1,11 @@
-""" Full assembly of the parts to form the complete network """
 
-# from .unet_parts import *
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).resolve().parent.parent))
 
-""" Parts of the U-Net model """
 import torch
 import torch.nn as nn
+
 import torch.nn.functional as F
 from tqdm import tqdm
 import os

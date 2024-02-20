@@ -1,3 +1,7 @@
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).resolve().parent.parent))
+
 from torch import nn
 import torch
 
@@ -13,5 +17,5 @@ def loss_function(output_e, outputs, imgs, lamda=1e-5, device=torch.device("cuda
     # in a jacobian matrix
     loss2 = torch.sqrt(torch.sum(torch.pow(imgs.grad, 2)))
     imgs.grad.data.zero_()
-    loss = loss1 + (lamda * loss2)
+    loss = loss1 + lamda * loss2
     return loss

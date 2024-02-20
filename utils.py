@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import cv2
 
 
-def draw_red_square(image, center_position, square_width, key, count):
+def draw_red_square(image, center_position, square_width, key, count,put_text=True):
     if key == "merge":
         color = [0, 0, 255]
     if key == "split":
@@ -26,15 +26,15 @@ def draw_red_square(image, center_position, square_width, key, count):
     image[clip_y_min:clip_y_max, clip_x_max] = color  # Right border
     image[clip_y_min, clip_x_min:clip_x_max] = color  # Top border
     image[clip_y_max, clip_x_min:clip_x_max] = color  # Bottom border
-    
-    image = cv2.putText(
-        image,
-        str(count),
-        (clip_x_max - 20, clip_y_min + 15),
-        fontFace=cv2.FONT_HERSHEY_SIMPLEX,
-        fontScale=0.5,
-        color=color,
-        thickness=2,
-    )
+    if put_text:
+        image = cv2.putText(
+            image,
+            str(count),
+            (clip_x_max - 20, clip_y_min + 15),
+            fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+            fontScale=0.5,
+            color=color,
+            thickness=2,
+        )
 
     return image

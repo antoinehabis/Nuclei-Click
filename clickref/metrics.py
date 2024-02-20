@@ -189,8 +189,8 @@ def model_predict(
     img = model(image_tensor, baseline_tensor)[0]
 
     img = np.transpose(img.cpu().detach().numpy(), (1, -1, 0))
-    exp = np.exp(img)
-    arg = np.argmax(exp, -1)
+    # exp = np.exp(img)
+    arg = np.argmax(img, -1)
 
     binary = (arg == 2.0).astype(int)
     labels = label(binary)
@@ -206,7 +206,7 @@ def model_predict(
         black = np.maximum(
             black, (i + 1) * binary_dilation(labels == nuclei, disk(2)).astype(int)
         )
-    return black.astype(int), exp
+    return black.astype(int), img
 
 
 def model_predict_with_click(
@@ -246,9 +246,8 @@ def model_predict_with_click(
     img = model(image_tensor, baseline_tensor)[0]
 
     img = np.transpose(img.cpu().detach().numpy(), (1, -1, 0))
-    exp = np.exp(img)
-
-    arg = np.argmax(exp, -1)
+    print(img)
+    arg = np.argmax(img, -1)
 
     binary = (arg == 2.0).astype(int)
     labels = label(binary)
@@ -262,12 +261,12 @@ def model_predict_with_click(
 
     for i, nuclei in enumerate(np.unique(labels)[1:]):
         black = np.maximum(
-            black, (i + 1) * binary_dilation(labels == nuclei, disk(2)).astype(int)
+            black, (i + 1) * binary_dilation(labels == nuclei, disk(radius)).astype(int)
         )
-
+        
     return (
         black.astype(int),
-        exp,
+        img,
         binary_baseline,
     )
 
@@ -362,8 +361,9 @@ def model_predict_batch(pred, count_erase=15, radius=3):
     return black
 
 
-
-def n_channel_to_rgb(click, colormap = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (0, 255, 255)]):
+def n_channel_to_rgb(
+    click, colormap=[(255, 0, 0), (0, 255, 0), (0, 0, 255), (0, 255, 255)]
+):
     # Ensure the colormap has n entries
     if len(colormap) != click.shape[2]:
         raise ValueError("Colormap should have the same number of entries as channels.")

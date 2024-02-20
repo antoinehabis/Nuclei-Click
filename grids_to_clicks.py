@@ -34,6 +34,7 @@ def get_positions(labels):
 class Grid_to_click:
     def __init__(self, grid, filename, path_baseline):
         self.filename = filename
+        
         self.img_baseline = tifffile.imread(
             os.path.join(path_baseline,'baseline',self.filename)
         ).astype(np.uint8)
@@ -93,7 +94,7 @@ class Grid_to_click:
                     mean_ligns = np.mean(ligns)
                     mean_columns = np.mean(columns)
                     mean = np.array([mean_ligns, mean_columns])
-                    cov = np.cov(ligns, columns) 
+                    cov = np.cov(ligns, columns)*5 
                     try:
                         if (
                             not (np.isnan(cov).any())
@@ -157,7 +158,7 @@ class Grid_to_click:
                     mean_ligns = np.mean(ligns)
                     mean_columns = np.mean(columns)
                     mean = np.array([mean_ligns, mean_columns])
-                    cov = np.cov(ligns,columns) 
+                    cov = np.cov(ligns,columns)*5 
 
                     if (
                         not (np.isnan(cov).any())
@@ -196,7 +197,7 @@ class Grid_to_click:
                 for i in range(detections.shape[1]):
                     mean = detections[:, i]
                     function = scipy.stats.multivariate_normal(
-                        mean, np.eye(2) * mean_radius * 3
+                        mean, np.eye(2) * mean_radius * 15
                     )
                     img = np.swapaxes(
                         function.pdf(

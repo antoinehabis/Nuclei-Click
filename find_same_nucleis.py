@@ -7,8 +7,7 @@ from sklearn.metrics import pairwise_distances
 from utils import *
 import numpy as np
 from config import *
-
-
+from time import time
 
 class FindSame2:
     def __init__(self, df, model, threshold_images, threshold_nucleis, baseline):
@@ -34,6 +33,7 @@ class FindSame2:
         self.all_f3s = np.concatenate(f3)
         self.all_f4s = np.concatenate(f4)
         self.dic_errors_near = {}
+        self.path_baseline = os.path.join(path_pannuke, baseline)
 
     def predict(self, model, dl):
         features1, features2, features3, features4, features5 = (
@@ -44,11 +44,13 @@ class FindSame2:
             [],
         )
         model.eval()
-        model.cuda()
+        # model.cuda()
+        # model .cuda()
         loss_tot = 0.0
         with torch.no_grad():
             for batch in tqdm(dl):
-                inputs = batch[0].cuda()
+                # inputs = batch[0].cuda()
+                inputs = batch[0]
                 _, feature1, feature2, feature3, feature4, feature5 = model(inputs)
 
                 features1.append(feature1.cpu().detach().numpy())
@@ -66,12 +68,12 @@ class FindSame2:
             tifffile.imread(os.path.join(path_images, self.filename_support)) / 255
         )
         self.img_baseline = tifffile.imread(
-            os.path.join(path_stardist, "baseline", self.filename_support)
+            os.path.join(self.path_baseline, "baseline", self.filename_support)
         )
         self.img_gt = tifffile.imread(
             os.path.join(path_gt, "baseline", self.filename_support)
         )
-        self.G = Gtgrid(self.img_gt, self.img_baseline, bool_remove_borders=True)
+        self.G = Gtgrid(self.img_gt, self.img_baseline, bool_remove_borders=False)
         filename_support = self.df.iloc[self.index].filename
         self.dic_grids_errors, self.scales_to_use = self.G.create_dic_errors()
 
@@ -125,8 +127,7 @@ class FindSame2:
         plt.show()
 
     def select_images_near(self):
-        f5s = np.mean(self.all_f4s, axis=(-1, -2))
-        pdist5 = pairwise_distances(f5s)
+        pdist5 = pairwise_distances(self.all_f4s)
         inferior_to_threshold = np.argwhere(
             pdist5[self.index] < self.threshold_images
         ).flatten()
@@ -147,7 +148,6 @@ class FindSame2:
         dic_scale_features[3] = sub_f3s
         dic_scale_features[4] = sub_f4s
         self.dic_scale_features = dic_scale_features
-
         self.filenames_near = [
             self.df.iloc[index].filename for index in self.sub_dataset
         ]
@@ -162,7 +162,6 @@ class FindSame2:
         self.images_near_nuclei = []
 
     def find_nearest_nucleis(self, norm, threshold_nuclei):
-        # print(norm.shape)
         args = np.argsort(norm, axis=None)
         q1, r1 = np.divmod(args, norm.shape[-1] * norm.shape[-2])
         q2, r2 = np.divmod(r1, norm.shape[-2])
@@ -180,9 +179,11 @@ class FindSame2:
 
                 for errors in np.argwhere(grid):
                     """for each grid we go through the positions"""
+                    t1 = time()
 
-                    scale = np.log2(256 // grid.shape[0])
+                    scale = np.clip(np.log2(256 // grid.shape[0]),0,3)
                     x = self.dic_scale_features[scale.astype(int)]
+
                     sub_features = torch.tensor(x)
 
                     feature_support = sub_features[0, :, errors[0], errors[1]]
@@ -192,14 +193,16 @@ class FindSame2:
                         roll_features - feature_support[:, None, None, None], dim=0
                     ) / (torch.norm(feature_support))
                     feature_size = feature_support.shape[0] // 16
+                    t2 = time()
+
                     norm = norm.cpu().detach().numpy()
                     grid_size = norm.shape[-1]
                     args = self.find_nearest_nucleis(
                         norm, self.threshold_nucleis * feature_size
                     )
-                    images_with_same_errors_detected.append(args[:, 0])
+                    t3 = time()
 
-                    # factor_resize = (256 / (2 ** (scale)) - 1) / (256 - 1)
+                    images_with_same_errors_detected.append(args[:, 0])
 
                     for nuclei in args:
                         nuclei[1:] = (2 ** (scale) * (nuclei[1:] + 0.5)).astype(int)
@@ -217,6 +220,12 @@ class FindSame2:
                             )
                         )
                     count += 1
+                    t4 = time()
+
+                    print(t4 - t3, "draw squares")
+                    print(t3 - t2, "find_nearest_nuclei")
+                    print(t2 - t1, "norm ")
+
         if len(images_with_same_errors_detected) > 0:
             images_with_same_errors_detected = np.unique(
                 np.concatenate(images_with_same_errors_detected)
