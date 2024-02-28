@@ -9,5 +9,5 @@ unused/*
 *.csv
 /analyse_csv_files.ipynb
 /runs
-/train_autoencoder.ipynb
-/generate_results.ipynb
+train_autoencoder.ipynb
+generate_results.ipynb
