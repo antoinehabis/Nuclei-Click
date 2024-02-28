@@ -1,7 +1,7 @@
 import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parent.parent))
-
+from config import parameters
 from .unet_parts import *
 import torch
 from torch.nn import Linear, Flatten
@@ -23,8 +23,8 @@ class UNet(nn.Module):
         self.up3 = (Up(self.filters*4, self.filters*2 // factor, bilinear))
         self.up4 = (Up(self.filters*2,self.filters, bilinear))
         self.outc = (OutConv(self.filters, n_classes))
-        self.dense1 = Linear(self.filters**(2)*16*16 , self.filters**2, bias=True)
-        self.dense2 = Linear(self.filters**2, self.filters**(2)*16*16, bias=True)
+        self.dense1 = Linear(self.filters**(2)*16*16 , parameters['n_embedding'], bias=True)
+        self.dense2 = Linear(parameters['n_embedding'], self.filters**(2)*16*16, bias=True)
         self.flatten = Flatten(start_dim=1, end_dim=-1)
     def forward(self, x):
         x1 = self.inc(x)
@@ -41,7 +41,7 @@ class UNet(nn.Module):
         x = self.up3(x)
         x = self.up4(x)
         logits = self.outc(x)
-        return logits, x1, x2, x3, x4, x6
+        return logits, x1, x2, x3, x4, x5,x6
 
     def use_checkpointing(self):
         self.inc = torch.utils.checkpoint(self.inc)

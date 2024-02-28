@@ -54,7 +54,6 @@ class Grid_to_click:
             grid = self.grid_merge
         size = len(np.where(grid)[0])
 
-        print(which, size)
 
         detections = np.zeros((2, size))
 
@@ -117,7 +116,6 @@ class Grid_to_click:
 
     def split_to_click(self):
         size = len(np.where(self.grid_split)[0])
-        print("split", size)
         detections = np.zeros((2, size))
 
         ligns, columns = np.where(self.grid_split)
@@ -180,7 +178,6 @@ class Grid_to_click:
 
     def fn_to_click(self):
         size = len(np.where(self.grid_fn)[0])
-        print("fn", size)
         im = np.zeros((parameters["dim"], parameters["dim"]))
         ligns, columns = np.where(self.grid_fn)
         detections = (np.stack([ligns, columns], axis=0)).astype(int)

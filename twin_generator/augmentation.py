@@ -17,11 +17,11 @@ import tifffile
 dim = 256
 
 
-def get_elastic_deform_and_crop(img):
+def get_elastic_deform_and_crop(img,sigma):
 
     ### img must have values between 0 and 1
 
-    img_deformed = elasticdeform.deform_random_grid(img, sigma=5, axis=(0, 1))
+    img_deformed = elasticdeform.deform_random_grid(img, sigma=sigma, axis=(0, 1))
     q = np.mean(img_deformed, -1)
     ret = (1 - (q == 0)).astype("bool")
     rect = lir.lir(ret)
@@ -32,7 +32,7 @@ def get_elastic_deform_and_crop(img):
 
 
 
-def augmentation(img,displacement= np.random.randn(3, 3, 2) * 7):
+def augmentation(img,sigma=8):
 
     ps = np.random.random(10)
 
@@ -53,14 +53,14 @@ def augmentation(img,displacement= np.random.randn(3, 3, 2) * 7):
         
     if ps[3]>0.5:
 
-        ker = np.random.random(1)*1.0
+        ker = np.random.random(1)*1.5
         img = gaussian(img, sigma=(ker, ker), truncate=3.5, channel_axis=2)
     img = np.clip(img,0,1)
-    img  = get_elastic_deform_and_crop(img)
+    img  = get_elastic_deform_and_crop(img,sigma=sigma)
     ### image in type np.uint8
 
-    img = A.RandomBrightnessContrast(brightness_limit=[-0.05,0.15], contrast_limit=[-0.1,0.1], p=1.0)(image = img)['image']
-    img = A.augmentations.transforms.RandomGamma (gamma_limit=(80, 120), eps=None, always_apply=False, p=1)(image = img)['image']
+    img = A.RandomBrightnessContrast(brightness_limit=[-0.05,0.10], contrast_limit=[-0.1,0.1], p=1.0)(image = img)['image']
+    img = A.augmentations.transforms.RandomGamma (gamma_limit=(80, 120), always_apply=False, p=1)(image = img)['image']
     img = img / 255
     return img
 

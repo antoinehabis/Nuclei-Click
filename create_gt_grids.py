@@ -13,11 +13,11 @@ import itertools
 
 
 class Gtgrid:
-    def __init__(self, img_gt, img_baseline, area=200, bool_remove_borders=False):
+    def __init__(self, img_gt, img_baseline, area=200, bool_remove_borders=False,set_margin=False):
         self.img_gt = img_gt
         self.img_baseline = img_baseline
         self.bool_remove_borders = bool_remove_borders
-
+        self.set_margin = set_margin
         if self.bool_remove_borders:
             self.img_gt = self.remove_nuclei_border(self.img_gt)
             self.img_baseline = self.remove_nuclei_border(self.img_baseline)
@@ -164,8 +164,19 @@ class Gtgrid:
                 row, col = np.clip(row, 0, 256 // (2**scale) - 1), np.clip(
                     col, 0, 256 // (2**scale) - 1
                 )
+                margin = np.array([20/(2**i) for i in range(5)])
+                
+                if self.set_margin == True:
+                    margin_scale = margin[scale]
+                    nb_max = scales[scale].shape[0]
 
-                scales[scale][row, col] = 1
+                    if (row >=margin_scale)*(row <=nb_max - margin_scale)*(col >=margin_scale)*(col <=nb_max - margin_scale):
+   
+                        scales[scale][row, col] = 1
+
+                else:
+                    scales[scale][row, col] = 1
+
             scales = [u for u in scales if np.sum(u) > 0]
             dic[key] = scales
 

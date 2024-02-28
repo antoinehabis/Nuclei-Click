@@ -10,7 +10,6 @@ import torch.nn.functional as F
 from tqdm import tqdm
 import os
 
-
 class DoubleConv(nn.Module):
     """(convolution => [BN] => ReLU) * 2"""
 

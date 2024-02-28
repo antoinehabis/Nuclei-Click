@@ -3,14 +3,21 @@ from autoencoder.dataloader import *
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 from create_gt_grids import Gtgrid
-from sklearn.metrics import pairwise_distances
+# from sklearn.metrics import pairwise_similarities
 from utils import *
 import numpy as np
 from config import *
 from time import time
 
 class FindSame2:
-    def __init__(self, df, model, threshold_images, threshold_nucleis, baseline):
+    def __init__(self, 
+                 df, 
+                 model,
+                 threshold_images,
+                 threshold_nucleis,
+                 baseline,
+                 pairwise_similarities):
+        
         dataset = CustomImageDataset(
             path_images=path_images, dataframe=df, augmentation=False
         )
@@ -25,13 +32,13 @@ class FindSame2:
         self.receptive_field_sizes = np.array([5, 13, 29, 61, 125])
         self.threshold_images = threshold_images
         self.threshold_nucleis = threshold_nucleis
-
-        f0, f1, f2, f3, f4 = self.predict(model, loader_test)
-        self.all_f0s = np.concatenate(f0)
+        self.pairwise_similarities = pairwise_similarities
+        f1, f2, f3, f4, f5 = self.predict(model, loader_test)
         self.all_f1s = np.concatenate(f1)
         self.all_f2s = np.concatenate(f2)
         self.all_f3s = np.concatenate(f3)
         self.all_f4s = np.concatenate(f4)
+        self.all_f5s = np.concatenate(f5)
         self.dic_errors_near = {}
         self.path_baseline = os.path.join(path_pannuke, baseline)
 
@@ -44,14 +51,13 @@ class FindSame2:
             [],
         )
         model.eval()
-        # model.cuda()
+        model.cuda()
         # model .cuda()
         loss_tot = 0.0
         with torch.no_grad():
             for batch in tqdm(dl):
-                # inputs = batch[0].cuda()
-                inputs = batch[0]
-                _, feature1, feature2, feature3, feature4, feature5 = model(inputs)
+                inputs = batch[0].cuda()
+                _, feature1, feature2, feature3, feature4, feature5, _ = model(inputs)
 
                 features1.append(feature1.cpu().detach().numpy())
                 features2.append(feature2.cpu().detach().numpy())
@@ -73,7 +79,7 @@ class FindSame2:
         self.img_gt = tifffile.imread(
             os.path.join(path_gt, "baseline", self.filename_support)
         )
-        self.G = Gtgrid(self.img_gt, self.img_baseline, bool_remove_borders=False)
+        self.G = Gtgrid(self.img_gt, self.img_baseline, bool_remove_borders=False,set_margin=True)
         filename_support = self.df.iloc[self.index].filename
         self.dic_grids_errors, self.scales_to_use = self.G.create_dic_errors()
 
@@ -127,26 +133,20 @@ class FindSame2:
         plt.show()
 
     def select_images_near(self):
-        pdist5 = pairwise_distances(self.all_f4s)
         inferior_to_threshold = np.argwhere(
-            pdist5[self.index] < self.threshold_images
+            self.pairwise_similarities[self.index] > self.threshold_images
         ).flatten()
-        argsort = np.argsort(pdist5[self.index])
+        argsort = np.argsort(-self.pairwise_similarities[self.index])
+
         self.sub_dataset = [i for i in argsort if i in inferior_to_threshold]
 
         ## select_features of features of the corresponding images
-        sub_f0s = self.all_f0s[self.sub_dataset]
-        sub_f1s = self.all_f1s[self.sub_dataset]
-        sub_f2s = self.all_f2s[self.sub_dataset]
-        sub_f3s = self.all_f3s[self.sub_dataset]
-        sub_f4s = self.all_f4s[self.sub_dataset]
-
         dic_scale_features = {}
-        dic_scale_features[0] = sub_f0s
-        dic_scale_features[1] = sub_f1s
-        dic_scale_features[2] = sub_f2s
-        dic_scale_features[3] = sub_f3s
-        dic_scale_features[4] = sub_f4s
+        dic_scale_features[0] = self.all_f1s[self.sub_dataset]
+        dic_scale_features[1] = self.all_f2s[self.sub_dataset]
+        dic_scale_features[2] = self.all_f3s[self.sub_dataset]
+        dic_scale_features[3] = self.all_f4s[self.sub_dataset]
+        dic_scale_features[4] = self.all_f5s[self.sub_dataset]
         self.dic_scale_features = dic_scale_features
         self.filenames_near = [
             self.df.iloc[index].filename for index in self.sub_dataset
@@ -184,22 +184,20 @@ class FindSame2:
                     scale = np.clip(np.log2(256 // grid.shape[0]),0,3)
                     x = self.dic_scale_features[scale.astype(int)]
 
-                    sub_features = torch.tensor(x)
-
+                    sub_features = torch.tensor(x).cuda()
+                    max_ = sub_features.shape[2]
                     feature_support = sub_features[0, :, errors[0], errors[1]]
                     roll_features = torch.transpose(sub_features, 0, 1)
 
                     norm = torch.norm(
                         roll_features - feature_support[:, None, None, None], dim=0
                     ) / (torch.norm(feature_support))
-                    feature_size = feature_support.shape[0] // 16
                     t2 = time()
 
-                    norm = norm.cpu().detach().numpy()
+                    norm = norm.cpu().cpu().detach().numpy()
                     grid_size = norm.shape[-1]
                     args = self.find_nearest_nucleis(
-                        norm, self.threshold_nucleis * feature_size
-                    )
+                        norm, self.threshold_nucleis)
                     t3 = time()
 
                     images_with_same_errors_detected.append(args[:, 0])
@@ -222,9 +220,6 @@ class FindSame2:
                     count += 1
                     t4 = time()
 
-                    print(t4 - t3, "draw squares")
-                    print(t3 - t2, "find_nearest_nuclei")
-                    print(t2 - t1, "norm ")
 
         if len(images_with_same_errors_detected) > 0:
             images_with_same_errors_detected = np.unique(

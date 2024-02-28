@@ -1,9 +1,13 @@
-import multiprocessing
 from augmentation import augmentation
 from config import *
 import tifffile
 import numpy as np
+import sys
+from tqdm import tqdm
+
 nb_twins = 20
+sys.path.append(os.getcwd())
+
 
 def generate_twins(filename):
     
@@ -12,13 +16,9 @@ def generate_twins(filename):
         if i==0:
             tifffile.imsave(os.path.join(path_twins,filename),img)
         else:
-            twin_filename = filename.split('.')[0]+'_twin'+str(i)+'.tif'
+            twin_filename = filename.split('.')[0]+'_twin'+str(i-1)+'.tif'
             img_augmented = (augmentation(img/255)*255).astype(np.uint8)
             tifffile.imsave(os.path.join(path_twins,twin_filename), img_augmented)
 
-if __name__ == '__main__':dd 
-    
-    multiprocessing.set_start_method('forkserver', force=True)
-    pool = multiprocessing.Pool(processes=16)                         
-    pool.map(generate_twins,list(df_val['filename']))
-    pool.close()
+for filename in tqdm(list(df_val['filename'])):
+    generate_twins(filename)

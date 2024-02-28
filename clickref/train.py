@@ -1,23 +1,24 @@
 import sys
 from pathlib import Path
+
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 import numpy as np
 from config import *
-from model import Click_ref
+from model import Clickref
 import neptune
 from dataloader import dataloaders
 import torch
 from TopoInteraction.TI_Loss import final_loss
 
-token = os.getenv('NEPTUNE_API_TOKEN')
-project = os.getenv('NEPTUNE_WORKSPACE')
+token = os.getenv("NEPTUNE_API_TOKEN")
+project = os.getenv("NEPTUNE_WORKSPACE")
 
-click_ref = Click_ref(3, 3)
-optimizer = torch.optim.Adam(click_ref.parameters(), lr=1e-4)
+clickref = Clickref(3, 3)
+optimizer = torch.optim.Adam(clickref.parameters(), lr=1e-4)
 scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.98)
 run = neptune.init_run(
-    name='deep-icy',
-    mode='offline',
+    name="deep-icy",
+    mode="offline",
     project=project,
     api_token=token,
 )
@@ -28,11 +29,10 @@ run["config/optimizer"] = "Adam"
 def train_cuda(model, optimizer, train_dl, val_dl, epochs=500):
     tmp = (torch.ones(1) * 1e10).cuda()
     for epoch in range(1, epochs + 1):
-
-        if epoch < 500:
+        if epoch < 250:
             ti_weights = 0.0
         else:
-            ti_weights = 1e-4
+            ti_weights = 1e-5
         #     final_loss = Finalloss(dice_weight=1.0, ti_weight=1e-4)
         # --- TRAIN AND EVALUATE ON TRAINING SET -----------------------------
         model.train()
@@ -54,9 +54,9 @@ def train_cuda(model, optimizer, train_dl, val_dl, epochs=500):
             # writer.add_scalar("Loss/train_click", loss_click, i)
             # writer.add_scalar("Loss/train_not_click", 1e-2 *loss_not_click, i)
             run["train/epoch/loss_click"].log(loss_click)
-            run["train/epoch/loss_not_click"].log(1e-2 *loss_not_click)
-            # run["train/epoch/loss_ti"].log(ti_weights * ti_loss)
-            loss = loss_click + 1e-2 *loss_not_click + ti_weights * ti_loss
+            run["train/epoch/loss_not_click"].log(1e-1 * loss_not_click)
+            run["train/epoch/loss_ti"].log(ti_weights * ti_loss)
+            loss = loss_click + 1e-2 * loss_not_click + ti_weights * ti_loss
             loss.backward()
             optimizer.step()
             run["train/epoch/loss"].log(loss)
@@ -81,24 +81,21 @@ def train_cuda(model, optimizer, train_dl, val_dl, epochs=500):
                     outputs, pred_outputs, stardists, clicks_max
                 )
                 run["validation/epoch/loss_click"].log(loss_click)
-                run["validation/epoch/loss_not_click"].log(1e-2 *loss_not_click)
-                run["validation/epoch/loss_not_click"].log(1e-2 *loss_not_click)
-                # run["validation/epoch/loss_ti"].log(ti_weights * ti_loss)
+                run["validation/epoch/loss_not_click"].log(1e-2 * loss_not_click)
+                run["validation/epoch/loss_not_click"].log(1e-2 * loss_not_click)
+                run["validation/epoch/loss_ti"].log(ti_weights * ti_loss)
                 # writer.add_scalar("Loss/validation_click", loss_click, i)
                 # writer.add_scalar("Loss/validation_not_click", 1e-2 *loss_not_click, i)
                 loss = loss_click + 1e-2 * loss_not_click + ti_weights * ti_loss
                 run["validation/epoch/loss"].log(loss)
-
                 mean += loss
-
-
             mean = torch.mean(mean)
             if torch.gt(tmp, mean):
                 print("the val loss decreased: saving the model...")
                 tmp = mean
-                torch.save(model.state_dict(), path_weights_click_ref)
+                torch.save(model.state_dict(), path_weights_clickref)
 
     return "Training done: the model was trained for " + str(epochs) + " epochs"
 
 
-train_cuda(click_ref, optimizer, dataloaders["train"], dataloaders["val"], epochs=100)
+train_cuda(clickref, optimizer, dataloaders["train"], dataloaders["val"], epochs=300)

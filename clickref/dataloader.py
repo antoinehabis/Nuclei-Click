@@ -8,9 +8,6 @@ from config import *
 import tifffile
 import torch
 
-path_baseline = path_stardist_modified
-
-
 class CustomImageDataset(Dataset):
     def __init__(self, path_baseline, path_images, path_gt, dataframe, augmenter_bool):
         self.path_gt = path_gt
@@ -92,19 +89,19 @@ class CustomImageDataset(Dataset):
         if self.augmenter_bool:
             image, click, baseline, gt = self.augmenter(image, click, baseline, gt)
 
-        # image = np.concatenate((image, click), axis=-1)
         image = np.transpose(image, (2, 0, 1)).astype(np.float32)
         baseline = np.transpose(baseline, (2, 0, 1)).astype(np.float32)
         gt = np.transpose(gt, (2, 0, 1)).astype(np.int64)
         click = np.transpose(click, (2, 0, 1)).astype(np.float32)
-        # print(image;shape)
         baseline_one_hot = torch.nn.functional.one_hot(torch.tensor(baseline,dtype = torch.int64).squeeze(),num_classes=3)
-        # print(baseline_one_hot.shape)
         baseline_one_hot = torch.moveaxis(baseline_one_hot, -1, 0).to(torch.float32)
+
+        gt_one_hot = torch.nn.functional.one_hot(torch.tensor(gt).squeeze(),num_classes=3)
+        gt_one_hot = torch.moveaxis(gt_one_hot, -1, 0).to(torch.float32)
         return (
             torch.tensor(image),
             baseline_one_hot,
-            torch.tensor(gt),
+            gt_one_hot,
             torch.tensor(click.copy()),
         )
 
@@ -118,13 +115,13 @@ dataset_train = CustomImageDataset(
 )
 
 
-# dataset_test = CustomImageDataset(
-#     path_baseline=path_baseline,
-#     path_images=path_images,
-#     path_gt=path_gt,
-#     dataframe=df_test,
-#     augmenter_bool=False,
-# )
+dataset_test = CustomImageDataset(
+    path_baseline=path_baseline,
+    path_images=path_images,
+    path_gt=path_gt,
+    dataframe=df_test,
+    augmenter_bool=False,
+)
 
 
 dataset_val = CustomImageDataset(
@@ -149,11 +146,10 @@ loader_val = DataLoader(
     shuffle=False,
 )
 
-# loader_test = DataLoader(
-#     batch_size=parameters["batch_size"],
-#     dataset=dataset_test,
-#     num_workers=4,
-#     shuffle=False,
-# )
+loader_test = DataLoader(
+    batch_size=parameters["batch_size"],
+    dataset=dataset_test,
+    shuffle=False,
+)
 
-dataloaders = {"train": loader_train, "val": loader_val}
+dataloaders = {"train": loader_train, "val": loader_val, "test": loader_test}
