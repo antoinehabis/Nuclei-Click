@@ -1,3 +1,5 @@
 [submodule "TopoInteraction"]
 	path = TopoInteraction
 	url = https://github.com/TopoXLab/TopoInteraction
+[submodule "clickref/TopoInteraction"]
+	ignore = untracked
