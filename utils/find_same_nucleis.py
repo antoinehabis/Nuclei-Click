@@ -1,9 +1,8 @@
 import torch
-from autoencoder.dataloader import *
+from cae.dataloader import *
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 from create_gt_grids import Gtgrid
-# from sklearn.metrics import pairwise_similarities
 from utils import *
 import numpy as np
 from config import *

@@ -84,8 +84,7 @@ def train_cuda(model, optimizer, train_dl, val_dl, epochs=500):
                 run["validation/epoch/loss_not_click"].log(1e-2 * loss_not_click)
                 run["validation/epoch/loss_not_click"].log(1e-2 * loss_not_click)
                 run["validation/epoch/loss_ti"].log(ti_weights * ti_loss)
-                # writer.add_scalar("Loss/validation_click", loss_click, i)
-                # writer.add_scalar("Loss/validation_not_click", 1e-2 *loss_not_click, i)
+        
                 loss = loss_click + 1e-2 * loss_not_click + ti_weights * ti_loss
                 run["validation/epoch/loss"].log(loss)
                 mean += loss

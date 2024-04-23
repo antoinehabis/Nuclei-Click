@@ -8,6 +8,7 @@ parameters["batch_size"] = 32
 parameters["lr"] = 1e-4
 parameters["n_embedding"] = 512
 parameters['contractive'] = 1e-5
+
 #####   PANNUKE DATASET   #####
 path_DATA = os.getenv('PATH_DATA')
 path_pannuke = os.path.join(path_DATA, 'pannuke')
@@ -27,7 +28,7 @@ path_images = os.path.join(path_pannuke, "images")
 path_gt1 = os.path.join(path_pannuke, "data_gt", "baseline")
 path_twins = os.path.join(path_pannuke, "data_twins")
 ###############################
-path_click_project = "/pasteur/appa/homes/ahabis/1-Click_project"
+path_click_project = "."
 
 path_encodings = os.path.join(path_pannuke,'encodings')
 path_gt = os.path.join(path_pannuke, "data_gt")

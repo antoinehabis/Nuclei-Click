@@ -4,6 +4,7 @@ import tifffile
 import numpy as np
 from glob import glob
 import cv2
+
 path_baseline = path_stardist
 
 for path in tqdm(glob(os.path.join(path_baseline,'baseline/*'))):

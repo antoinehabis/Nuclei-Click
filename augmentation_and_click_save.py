@@ -1,8 +1,13 @@
-from augment_merge_split import *
+import sys
+from pathlib import Path
+
+sys.path.append(str(Path(__file__).resolve().parent.parent))
+
+from utils.augment_merge_split import *
 from config import *
 from multiprocessing import Pool
-from create_gt_grids import Gtgrid
-from grids_to_clicks import Grid_to_click
+from utils.create_gt_grids import Gtgrid
+from utils.grids_to_clicks import Grid_to_click
 import os
 import tifffile
 import argparse

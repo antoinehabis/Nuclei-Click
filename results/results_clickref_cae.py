@@ -1,14 +1,19 @@
+from pathlib import Path
+import sys
+sys.path.append(str(Path(__file__).resolve().parent.parent))
+
 from clickref.model import Clickref
 import torch
-from autoencoder.dataloader import * 
+from cae.dataloader import * 
 from tqdm import tqdm
 from utils import *
-from find_same_nucleis import FindSame2
-from grids_to_clicks import Grid_to_click
-from matching import matching
+from utils.find_same_nucleis import FindSame2
+from utils.grids_to_clicks import Grid_to_click
+from utils.matching import matching
+from utils.utils import post_processing, AJI, AD
 from clickref.dataloader import CustomImageDataset
 from beautifultable import BeautifulTable
-from autoencoder.unet import UNet
+from cae.unet import UNet
 import argparse
 import neptune
 

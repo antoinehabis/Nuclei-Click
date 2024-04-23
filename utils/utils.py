@@ -139,7 +139,7 @@ def AJI(crop_img_new_seg, crop_img_gt):
         return intersection / union
 
 
-def DICE(crop_img_new_seg, crop_img_gt):
+def ADICE(crop_img_new_seg, crop_img_gt):
     Is = 0
     Us = 0
     intersection = 0
@@ -197,7 +197,7 @@ def get_results(disk_size, size_erase, arr_baselines, arr_gts, arr_preds, arr_cl
         results[i,:,2] = match_pred.f1, match_baseline.f1
         results[i,:,3] = match_pred.panoptic_quality, match_baseline.panoptic_quality
         results[i,:,4] = AJI(pred_post_processed, gt_post_processed), AJI(baseline_post_processed, gt_post_processed)
-        results[i,:,5] = DICE(pred_post_processed, gt_post_processed), DICE(baseline_post_processed, gt_post_processed)
+        results[i,:,5] = ADICE(pred_post_processed, gt_post_processed), ADICE(baseline_post_processed, gt_post_processed)
  
     mean_res = np.mean(results, axis = 0)
     res_pred, res_base = mean_res[0], mean_res[1]

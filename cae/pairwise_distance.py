@@ -7,7 +7,6 @@ import numpy as np
 import torch
 from numba import jit
 from config import *
-import time
 
 
 u = np.load(os.path.join(path_encodings, "encodings"+str(parameters['n_embedding'])+"_"+str(parameters['contractive'])+".npy"))

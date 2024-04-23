@@ -16,7 +16,7 @@ from skimage.morphology import (
 )
 from skimage.morphology import disk
 from skimage.measure import label
-from matching import matching
+from utils.matching import matching
 
 
 def remove_wrong_annotation(img_gt):

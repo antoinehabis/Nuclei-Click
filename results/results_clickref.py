@@ -1,3 +1,8 @@
+import sys
+from pathlib import Path
+
+sys.path.append(str(Path(__file__).resolve().parent.parent))
+
 from clickref.model import Click_ref
 import torch
 from torch.utils.data import DataLoader
