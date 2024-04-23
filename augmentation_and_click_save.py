@@ -11,7 +11,7 @@ from utils.grids_to_clicks import Grid_to_click
 import os
 import tifffile
 import argparse
-import sys
+
 parser = argparse.ArgumentParser(
     description="Code to get the results of the clickref model "
 )

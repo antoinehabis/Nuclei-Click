@@ -1,6 +1,9 @@
 ## This repository offers an enhancement to the article:
 ### *Smart Learning of Click and Refine for Nuclei Segmentation on Histology Images*
 
+
+![Alt text](./images_github/2_step_approach.png "Unsupervised DCF: evolution of the contour on four real-life images when varying the initial contour")
+
 ### 1. Download PanNuke Dataset: 
 
 You can Download the dataset here:[PanNuke](https://warwick.ac.uk/fac/cross_fac/tia/data/pannukeg).
@@ -8,6 +11,7 @@ You can Download the dataset here:[PanNuke](https://warwick.ac.uk/fac/cross_fac/
 The dataset contains 3 folders: folder 1,2,3.
 
 In the config file  [config](config.py), precise the folder location:
+
 ```
 path_panuke = FOLDER_LOCATION
 ```
